@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For You 🩵🌸</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-dark: #3a2e39;
+            --text-light: #6b5b69;
+            --primary-accent: #d84b7c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #fce8f3;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(255, 194, 212, 0.6) 0px, transparent 50%),
+                radial-gradient(at 80% 10%, rgba(203, 227, 255, 0.6) 0px, transparent 50%),
+                radial-gradient(at 40% 80%, rgba(224, 159, 181, 0.5) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(189, 224, 254, 0.7) 0px, transparent 50%);
+            background-size: 200% 200%;
+            animation: meshFlow 15s ease infinite alternate;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes meshFlow {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 100%; }
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+            animation: drift linear infinite;
+        }
+
+        @keyframes drift {
+            0% { transform: translateY(-5vh) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(105vh) rotate(360deg) scale(1); opacity: 0; }
+        }
+
+        .scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 40px 20px;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            z-index: 10;
+        }
+
+        #scene-2 {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+            display: none;
+        }
+
+        .header {
+            text-align: center;
+            z-index: 20;
+            margin-top: 2vh;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 10px rgba(255,255,255,0.5);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .bouquet-stage {
+            position: relative;
+            width: 380px;
+            height: 520px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .glow-orb {
+            position: absolute;
+            bottom: 180px;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 2s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        .glow-orb.active {
+            opacity: 1;
+            animation: pulseGlow 3s infinite alternate ease-in-out;
+        }
+        
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.15); opacity: 1; }
+        }
+
+        .wrapper-back, .wrapper-front {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .wrapper-back {
+            bottom: 30px;
+            width: 320px;
+            height: 400px;
+            z-index: 5;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.08));
+        }
+
+        .wrapper-front {
+            bottom: -5px;
+            width: 340px;
+            height: 380px;
+            z-index: 30;
+            filter: drop-shadow(0 -5px 20px rgba(0,0,0,0.18));
+            opacity: 0;
+            transform: translateX(-50%) translateY(40px);
+            transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .wrapper-front.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .flower-item {
+            position: absolute;
+            bottom: 90px;
+            transform-origin: bottom center;
+            transform: translate(var(--start-x), var(--start-y)) scale(0) rotate(var(--start-r));
+            opacity: 0;
+            z-index: 15;
+            transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15));
+        }
+
+        .flower-item.assembled {
+            transform: translate(var(--final-x), var(--final-y)) scale(1) rotate(var(--final-r));
+            opacity: 1;
+        }
+
+        .flower-item.front-layer { z-index: 25; }
+        .flower-item.mid-layer { z-index: 20; }
+        .flower-item.back-layer { z-index: 15; }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+            z-index: 40;
+            margin-bottom: 30px;
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            color: var(--text-dark);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 16px 36px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-glass::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.6), transparent);
+            transform: skewX(-20deg);
+            transition: all 0.5s ease;
+        }
+
+        .btn-glass:hover::before {
+            left: 150%;
+        }
+
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.6);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        .btn-glass:active {
+            transform: translateY(1px);
+        }
+
+        .btn-accept {
+            display: none;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 200, 220, 0.7));
+            border: 2px solid white;
+            color: #d84b7c;
+            animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .btn-glass:disabled {
+            background: rgba(255,255,255,0.2);
+            color: #999;
+            cursor: not-allowed;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: none;
+        }
+        .btn-glass:disabled:hover {
+            transform: none;
+        }
+
+        .vase-stage {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        .vase-container {
+            position: relative;
+            width: 220px;
+            height: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .vase {
+            width: 130px;
+            height: 220px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255,255,255,0.6);
+            border-bottom: 4px solid rgba(255,255,255,0.9);
+            border-top: 2px solid rgba(255,255,255,0.8);
+            border-radius: 40px 40px 60px 60px / 20px 20px 80px 80px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.1), inset -5px -5px 20px rgba(255,255,255,0.5), inset 5px 5px 20px rgba(255,255,255,0.5);
+            z-index: 20;
+        }
+
+        .vase::after {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 20%;
+            height: 80%;
+            background: linear-gradient(to right, rgba(255,255,255,0.8), transparent);
+            border-radius: 50%;
+            filter: blur(2px);
+            transform: skewX(-5deg);
+        }
+
+        .water {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 35%;
+            background: linear-gradient(180deg, rgba(162, 210, 255, 0.5) 0%, rgba(189, 224, 254, 0.7) 100%);
+            border-top: 2px solid rgba(255,255,255,0.6);
+            transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 10;
+            box-shadow: inset 0 5px 15px rgba(255,255,255,0.4);
+        }
+
+        .water.level-up {
+            height: 45%;
+        }
+
+        .vase-stem {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 320px;
+            background: linear-gradient(to right, #4a6b49, #718355, #4a6b49);
+            z-index: 5;
+            border-radius: 3px;
+            box-shadow: inset -1px 0 3px rgba(0,0,0,0.2);
+        }
+
+        .vase-flower-wrapper {
+            position: absolute;
+            top: -90px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            filter: drop-shadow(0 15px 20px rgba(0,0,0,0.15));
+            transition: filter 0.5s ease;
+        }
+
+        .glowing {
+            filter: drop-shadow(0 0 25px rgba(255, 194, 212, 1));
+        }
+
+        @keyframes happyBounce {
+            0% { transform: translateX(-50%) translateY(0) scale(1); }
+            30% { transform: translateX(-50%) translateY(-15px) scale(1.05); }
+            50% { transform: translateX(-50%) translateY(5px) scale(0.98); }
+            70% { transform: translateX(-50%) translateY(-5px) scale(1.02); }
+            100% { transform: translateX(-50%) translateY(0) scale(1); }
+        }
+
+        .water-drop {
+            position: absolute;
+            width: 10px;
+            height: 15px;
+            background: #89c2d9;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            z-index: 30;
+            opacity: 0;
+            transform: translateY(-100px) scale(0);
+        }
+
+        @keyframes dropFall {
+            0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { transform: translateY(120px) scale(1); opacity: 0.8; }
+            100% { transform: translateY(150px) scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <svg width="0" height="0" style="position:absolute;">
+        <defs>
+            <linearGradient id="wrapCream" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="60%" stop-color="#faedef"/>
+                <stop offset="100%" stop-color="#eed5dc"/>
+            </linearGradient>
+            <linearGradient id="wrapBlush" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffe4e8"/>
+                <stop offset="60%" stop-color="#f8cdda"/>
+                <stop offset="100%" stop-color="#e8aabf"/>
+            </linearGradient>
+            <linearGradient id="ribbonSatin" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ad143c"/>
+                <stop offset="50%" stop-color="#7a0d28"/>
+                <stop offset="100%" stop-color="#590d22"/>
+            </linearGradient>
+            <linearGradient id="ribbonLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#e01e54"/>
+                <stop offset="50%" stop-color="#a81239"/>
+                <stop offset="100%" stop-color="#7a0d28"/>
+            </linearGradient>
+
+            <radialGradient id="petalPink" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffe3eb"/>
+                <stop offset="70%" stop-color="#ff8fa3"/>
+                <stop offset="100%" stop-color="#ff4d6d"/>
+            </radialGradient>
+            <radialGradient id="petalDarkPink" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffb3c6"/>
+                <stop offset="70%" stop-color="#ff5c8a"/>
+                <stop offset="100%" stop-color="#c9184a"/>
+            </radialGradient>
+            
+            <radialGradient id="hydroBlue1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#e1efff"/>
+                <stop offset="100%" stop-color="#a2d2ff"/>
+            </radialGradient>
+            <radialGradient id="hydroBlue2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#e0e1ff"/>
+                <stop offset="100%" stop-color="#bde0fe"/>
+            </radialGradient>
+
+            <linearGradient id="leafGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a3b18a"/>
+                <stop offset="100%" stop-color="#588157"/>
+            </linearGradient>
+
+            <g id="hydrangea-cluster">
+                <circle cx="0" cy="-20" r="18" fill="url(#hydroBlue1)" />
+                <circle cx="-18" cy="-5" r="16" fill="url(#hydroBlue2)" />
+                <circle cx="18" cy="-5" r="16" fill="url(#hydroBlue2)" />
+                <circle cx="-10" cy="15" r="15" fill="url(#hydroBlue1)" />
+                <circle cx="10" cy="15" r="15" fill="url(#hydroBlue1)" />
+                <circle cx="0" cy="0" r="14" fill="url(#hydroBlue2)" />
+                <circle cx="0" cy="-20" r="3" fill="#fff" opacity="0.6"/>
+                <circle cx="-18" cy="-5" r="3" fill="#fff" opacity="0.6"/>
+                <circle cx="18" cy="-5" r="3" fill="#fff" opacity="0.6"/>
+                <circle cx="0" cy="0" r="3" fill="#fff" opacity="0.6"/>
+            </g>
+
+            <g id="pink-lily">
+                <path d="M0,0 Q-20,-30 0,-60 Q20,-30 0,0" fill="url(#petalDarkPink)" transform="rotate(0)"/>
+                <path d="M0,0 Q-20,-30 0,-60 Q20,-30 0,0" fill="url(#petalPink)" transform="rotate(72)"/>
+                <path d="M0,0 Q-20,-30 0,-60 Q20,-30 0,0" fill="url(#petalDarkPink)" transform="rotate(144)"/>
+                <path d="M0,0 Q-20,-30 0,-60 Q20,-30 0,0" fill="url(#petalPink)" transform="rotate(216)"/>
+                <path d="M0,0 Q-20,-30 0,-60 Q20,-30 0,0" fill="url(#petalDarkPink)" transform="rotate(288)"/>
+                
+                <path d="M0,0 Q-15,-25 0,-50 Q15,-25 0,0" fill="url(#petalPink)" transform="rotate(36)"/>
+                <path d="M0,0 Q-15,-25 0,-50 Q15,-25 0,0" fill="url(#petalDarkPink)" transform="rotate(108)"/>
+                <path d="M0,0 Q-15,-25 0,-50 Q15,-25 0,0" fill="url(#petalPink)" transform="rotate(180)"/>
+                <path d="M0,0 Q-15,-25 0,-50 Q15,-25 0,0" fill="url(#petalDarkPink)" transform="rotate(252)"/>
+                <path d="M0,0 Q-15,-25 0,-50 Q15,-25 0,0" fill="url(#petalPink)" transform="rotate(324)"/>
+                
+                <line x1="0" y1="0" x2="-8" y2="-20" stroke="#ffb703" stroke-width="1.5"/>
+                <circle cx="-8" cy="-20" r="2.5" fill="#fb8500"/>
+                <line x1="0" y1="0" x2="8" y2="-18" stroke="#ffb703" stroke-width="1.5"/>
+                <circle cx="8" cy="-18" r="2.5" fill="#fb8500"/>
+                <line x1="0" y1="0" x2="0" y2="-25" stroke="#ffb703" stroke-width="1.5"/>
+                <circle cx="0" cy="-25" r="2.5" fill="#fb8500"/>
+                <circle cx="0" cy="0" r="6" fill="#c9184a"/>
+            </g>
+        </defs>
+    </svg>
+
+    <div id="particles"></div>
+
+    <div class="scene" id="scene-1">
+        <div class="header">
+            <h1>A Gift For You</h1>
+            <p class="subtitle" id="instruction-1">Tap below to assemble the bouquet</p>
+        </div>
+
+        <div class="bouquet-stage">
+            <div class="glow-orb" id="glow"></div>
+
+            <div class="wrapper-back">
+                <svg viewBox="0 0 320 400" width="100%" height="100%">
+                    <path d="M130,390 L10,50 C 80,-10 240,-10 310,50 L190,390 Z" fill="url(#wrapCream)"/>
+                    <path d="M140,390 L30,65 C 100,15 220,15 290,65 L180,390 Z" fill="url(#wrapBlush)"/>
+                    <path d="M140,390 L30,65 C 100,15 220,15 290,65 L180,390 Z" fill="rgba(0,0,0,0.06)"/>
+                    <path d="M150,390 L60,90 C 120,60 200,60 260,90 L170,390 Z" fill="rgba(0,0,0,0.1)"/>
+                </svg>
+            </div>
+
+            <!-- Flowers -->
+            <div class="flower-item back-layer" style="--start-x: -150px; --start-y: 100px; --start-r: -60deg; --final-x: -60px; --final-y: -140px; --final-r: -25deg;">
+                <svg width="80" height="150" viewBox="-40 -80 80 150">
+                    <path d="M0,0 Q-10,50 15,100" stroke="#718355" stroke-width="4" fill="none"/>
+                    <use href="#hydrangea-cluster" transform="scale(1.25)" />
+                </svg>
+            </div>
+
+            <div class="flower-item back-layer" style="--start-x: 150px; --start-y: 100px; --start-r: 60deg; --final-x: 60px; --final-y: -140px; --final-r: 25deg;">
+                <svg width="80" height="150" viewBox="-40 -80 80 150">
+                    <path d="M0,0 Q10,50 -15,100" stroke="#718355" stroke-width="4" fill="none"/>
+                    <use href="#hydrangea-cluster" transform="scale(1.25)" />
+                </svg>
+            </div>
+
+            <div class="flower-item mid-layer" style="--start-x: 0px; --start-y: -150px; --start-r: 0deg; --final-x: 0px; --final-y: -175px; --final-r: 0deg;">
+                <svg width="80" height="180" viewBox="-40 -80 80 180">
+                    <path d="M0,0 Q5,60 0,120" stroke="#718355" stroke-width="4.5" fill="none"/>
+                    <use href="#hydrangea-cluster" transform="scale(1.35)" />
+                </svg>
+            </div>
+
+            <div class="flower-item mid-layer" style="--start-x: -120px; --start-y: 0px; --start-r: -45deg; --final-x: -45px; --final-y: -100px; --final-r: -15deg;">
+                <svg width="120" height="160" viewBox="-60 -80 120 160">
+                    <path d="M0,0 Q-15,50 10,110" stroke="#588157" stroke-width="5" fill="none"/>
+                    <path d="M-5,40 Q-30,30 -40,10 Q-20,10 -5,40" fill="url(#leafGreen)"/>
+                    <use href="#pink-lily" transform="scale(1.15) rotate(-15)" />
+                </svg>
+            </div>
+
+            <div class="flower-item mid-layer" style="--start-x: 120px; --start-y: 0px; --start-r: 45deg; --final-x: 45px; --final-y: -100px; --final-r: 15deg;">
+                <svg width="120" height="160" viewBox="-60 -80 120 160">
+                    <path d="M0,0 Q15,50 -10,110" stroke="#588157" stroke-width="5" fill="none"/>
+                    <path d="M5,40 Q30,30 40,10 Q20,10 5,40" fill="url(#leafGreen)"/>
+                    <use href="#pink-lily" transform="scale(1.15) rotate(25)" />
+                </svg>
+            </div>
+
+            <div class="flower-item front-layer" style="--start-x: 0px; --start-y: 150px; --start-r: 180deg; --final-x: 0px; --final-y: -120px; --final-r: 0deg;">
+                <svg width="140" height="180" viewBox="-70 -90 140 180">
+                    <path d="M0,0 L0,120" stroke="#3a5a40" stroke-width="6" fill="none"/>
+                    <path d="M0,50 Q-35,40 -45,15 Q-20,20 0,50" fill="url(#leafGreen)"/>
+                    <path d="M0,60 Q35,50 45,25 Q20,30 0,60" fill="url(#leafGreen)"/>
+                    <use href="#pink-lily" transform="scale(1.4) rotate(10)" />
+                </svg>
+            </div>
+
+            <div class="wrapper-front" id="wrap-front">
+                <svg viewBox="0 0 320 380" width="100%" height="100%">
+                    <path d="M160,370 L10,60 Q 60,240 180,370 Z" fill="url(#wrapCream)"/>
+                    <path d="M165,370 L25,65 Q 70,245 185,370 Z" fill="url(#wrapBlush)"/>
+                    <path d="M160,370 L310,60 Q 260,240 140,370 Z" fill="url(#wrapCream)"/>
+                    <path d="M155,370 L295,65 Q 250,245 135,370 Z" fill="url(#wrapBlush)"/>
+                    <path d="M110,370 L50,180 Q 160,260 270,180 L210,370 Z" fill="url(#wrapCream)"/>
+                    <path d="M110,370 L50,180 Q 160,260 270,180 L210,370 Z" fill="rgba(0,0,0,0.05)"/>
+
+                    <path d="M100,240 Q160,260 220,240 L210,270 Q160,290 110,270 Z" fill="url(#ribbonSatin)"/>
+                    <path d="M140,260 Q 110,330 115,370 Q 140,340 160,280 Z" fill="url(#ribbonSatin)"/>
+                    <path d="M180,260 Q 210,330 205,370 Q 180,340 160,280 Z" fill="url(#ribbonSatin)"/>
+                    <path d="M150,255 C 50,200 30,280 140,270 C 145,270 145,255 150,255 Z" fill="url(#ribbonLight)"/>
+                    <path d="M145,260 C 70,225 50,275 135,268 Z" fill="rgba(0,0,0,0.2)"/> 
+                    <path d="M170,255 C 270,200 290,280 180,270 C 175,270 175,255 170,255 Z" fill="url(#ribbonLight)"/>
+                    <path d="M175,260 C 250,225 270,275 185,268 Z" fill="rgba(0,0,0,0.2)"/> 
+
+                    <ellipse cx="160" cy="260" rx="16" ry="14" fill="url(#ribbonLight)"/>
+                    <ellipse cx="160" cy="260" rx="10" ry="14" fill="rgba(0,0,0,0.2)"/>
+                    <path d="M152,250 C 160,246 168,250 168,265" stroke="rgba(255,255,255,0.4)" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-glass" id="btnAssemble" onclick="nextStep()">Add Flower ✨</button>
+            <button class="btn-glass btn-accept" id="btnAccept" onclick="transitionToScene2()">Accept Flower 💝</button>
+        </div>
+    </div>
+
+    <div class="scene" id="scene-2">
+        <div class="header">
+            <h1>Your Eternal Lily</h1>
+            <p class="subtitle" id="instruction-2">Water it daily to keep it glowing!</p>
+        </div>
+
+        <div class="vase-stage">
+            <div id="drop-zone" style="position:absolute; width:100%; height:100%; top:0; left:0; pointer-events:none;"></div>
+            
+            <div class="vase-container">
+                <div class="vase-flower-wrapper" id="vaseFlower">
+                    <svg width="180" height="150" viewBox="-90 -75 180 150">
+                        <!-- Extra leaves at the top of stem -->
+                        <path d="M0,50 Q-35,40 -45,15 Q-20,20 0,50" fill="url(#leafGreen)"/>
+                        <path d="M0,60 Q35,50 45,25 Q20,30 0,60" fill="url(#leafGreen)"/>
+                        <use href="#pink-lily" transform="scale(1.5)" />
+                    </svg>
+                </div>
+                
+                <div class="vase-stem"></div>
+                
+                <div class="vase">
+                    <div class="water" id="vaseWater"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-glass" id="btnWater" onclick="waterFlower()">Water Flower 💧</button>
+        </div>
+    </div>
+
+    <script>
+        // Particle System
+        const particlesContainer = document.getElementById('particles');
+        const elements = ['✦', '✧', '⋆', '•', '🌸', '✨'];
+        
+        function createParticle() {
+            const el = document.createElement('div');
+            el.className = 'particle';
+            el.innerText = elements[Math.floor(Math.random() * elements.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.fontSize = Math.random() * 8 + 12 + 'px';
+            el.style.animationDuration = Math.random() * 5 + 5 + 's';
+            el.style.color = Math.random() > 0.6 ? '#ffffff' : '#ffc2d4';
+
+            particlesContainer.appendChild(el);
+            setTimeout(() => el.remove(), 10000);
+        }
+        setInterval(createParticle, 400);
+
+        // Scene 1: Assembly Logic
+        let step = 0;
+        const flowers = document.querySelectorAll('.flower-item');
+        const btnAssemble = document.getElementById('btnAssemble');
+        const btnAccept = document.getElementById('btnAccept');
+        const subtitle1 = document.getElementById('instruction-1');
+
+        function nextStep() {
+            if (step < flowers.length) {
+                flowers[step].classList.add('assembled');
+                step++;
+                
+                if (step < flowers.length) {
+                    btnAssemble.innerText = `Add Flower (${step}/${flowers.length}) ✨`;
+                } else {
+                    btnAssemble.innerText = `Wrap Bouquet 🎀`;
+                }
+            } else if (step === flowers.length) {
+                document.getElementById('wrap-front').classList.add('visible');
+                subtitle1.innerText = "Wrapping in premium paper...";
+                btnAssemble.style.display = 'none';
+                
+                setTimeout(() => {
+                    document.getElementById('glow').classList.add('active');
+                    subtitle1.innerText = "A beautiful gift, just for you. 🩵🌸";
+                    
+                    setTimeout(() => {
+                        btnAccept.style.display = 'block';
+                    }, 800);
+                }, 1200);
+            }
+        }
+
+        // Transition Logic
+        function transitionToScene2() {
+            const scene1 = document.getElementById('scene-1');
+            const scene2 = document.getElementById('scene-2');
+            
+            scene1.style.opacity = '0';
+            scene1.style.transform = 'scale(0.9)';
+            
+            setTimeout(() => {
+                scene1.style.display = 'none';
+                scene2.style.display = 'flex';
+                
+                // Trigger reflow
+                void scene2.offsetWidth;
+                
+                scene2.style.opacity = '1';
+                scene2.style.transform = 'scale(1)';
+                
+                checkWateringStatus();
+            }, 800);
+        }
+
+        // Scene 2: Watering Logic
+        const btnWater = document.getElementById('btnWater');
+        const vaseFlower = document.getElementById('vaseFlower');
+        const vaseWater = document.getElementById('vaseWater');
+        const dropZone = document.getElementById('drop-zone');
+
+        function checkWateringStatus() {
+            try {
+                const lastWatered = localStorage.getItem('eternalLilyLastWatered');
+                const today = new Date().toDateString();
+                
+                if (lastWatered === today) {
+                    setWateredState();
+                }
+            } catch (e) {
+                console.warn("LocalStorage not accessible.");
+            }
+        }
+
+        function setWateredState() {
+            btnWater.disabled = true;
+            btnWater.innerText = "Watered today! Come back tomorrow 💕";
+            document.getElementById('instruction-2').innerText = "She's happy and glowing!";
+            vaseFlower.classList.add('glowing');
+            vaseWater.classList.add('level-up');
+        }
+
+        function createWaterDrops() {
+            const rect = vaseFlower.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const drop = document.createElement('div');
+                    drop.className = 'water-drop';
+                    
+                    // Randomize position slightly around center
+                    const offsetX = (Math.random() - 0.5) * 40;
+                    drop.style.left = `${centerX + offsetX}px`;
+                    drop.style.top = `${rect.bottom - 40}px`;
+                    drop.style.animation = `dropFall 0.8s cubic-bezier(0.5, 0, 1, 0.5) forwards`;
+                    
+                    document.body.appendChild(drop);
+                    
+                    setTimeout(() => drop.remove(), 800);
+                }, i * 150);
+            }
+        }
+
+        function waterFlower() {
+            createWaterDrops();
+            
+            setTimeout(() => {
+                vaseWater.classList.add('level-up');
+                vaseFlower.style.animation = 'none';
+                void vaseFlower.offsetWidth; // trigger reflow
+                vaseFlower.style.animation = 'happyBounce 1.2s ease forwards';
+                
+                setTimeout(() => {
+                    vaseFlower.classList.add('glowing');
+                }, 600);
+            }, 400);
+
+            try {
+                localStorage.setItem('eternalLilyLastWatered', new Date().toDateString());
+            } catch (e) {}
+
+            setTimeout(() => {
+                setWateredState();
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
